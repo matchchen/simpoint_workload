@@ -1,0 +1,40 @@
+/* Linker for simpoint_workload
+    0xa0000-0x100000
+*/
+MEMORY
+{
+    MEM1(RWX)  : ORIGIN = 0x000a0000,  LENGTH = 0x60000
+/*    MEM1(RWX)  : ORIGIN = 0x00000000,  LENGTH = 0x100000 */
+}
+__kernel_stack = 0xee000 ;
+
+ENTRY(__start)
+
+SECTIONS {
+    .text :
+    {
+        crt0.o (.text)
+        *(.text*)
+    } >MEM1
+
+    .rodata :  
+    {   
+        *( .rodata* )
+        *(.srodata)
+        *(.srodata.*)
+        *(.srodata.cst4*)
+	    *(.srodata.cst8*)
+	} >MEM1
+
+    .data :
+    {
+        *(.data*)
+        *(.sdata*)
+    } >MEM1
+
+    .bss :
+    {
+        *(.bss) *.(COMMON) *(.sbss)
+    } >MEM1
+    end = .;
+}
