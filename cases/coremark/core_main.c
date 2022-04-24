@@ -19,17 +19,17 @@ El Dorado Hills, CA, 95762
 /* File: core_main.c
 	This file contains the framework to acquire a block of memory, seed initial parameters, tun t he benchmark and report the results.
 */
-#define VCUNT_SIM
+
+#define BAREMETAL_M
 
 #include "coremark.h"
 #include "timer.h"
 
-#ifdef VCUNT_SIM
-  //#include "vtimer.h"
-  extern unsigned int get_vtimer();
-  int vtimer_start;
-  int vtimer_end;
-  int vcycles;
+#ifdef BAREMETAL_M
+  extern unsigned int get_cycle();
+  int cycle_start;
+  int cycle_end;
+  int cycles;
 #endif 
 
 int Loop_Num = 0;
@@ -58,8 +58,8 @@ void *iterate(void *pres) {
 	res->crcmatrix=0;
 	res->crcstate=0;
 
-#ifdef VCUNT_SIM
-  vtimer_start= get_vtimer();
+#ifdef BAREMETAL_M
+  cycle_start= get_cycle();
 #endif
 	for (i=0; i<iterations; i++) {
 		crc=core_bench_list(res,1);
@@ -69,22 +69,15 @@ void *iterate(void *pres) {
 		if (i==0) res->crclist=res->crc;
 	}
 
-#ifdef VCUNT_SIM
-
-  #define FREQ 100000000 
-  
-  vtimer_end= get_vtimer(); 
-  vcycles = vtimer_end - vtimer_start;
-  vcycles = vcycles/iterations;
-  printf ("\nVCUNT_SIM: CoreMark has been run %d times, one times cost %d cycles !\n",iterations,vcycles);
+#ifdef BAREMETAL_M
+  cycle_end= get_cycle(); 
+  cycles = cycle_end - cycle_start;
+  printf ("\nCoreMark has been run %d times, cost %d cycles !\n",iterations,cycles);
   float score;
-//  score = FREQ/(float)vcycles;
-//  printf ("\nVCUNT_SIM: CoreMark 1.0 : %f iterations/sec\n",score); //CoreMark = iterations of a sec
-  score = 1000000/(float)vcycles; //to relieve relations with FREQ
-  printf ("\nVCUNT_SIM: CoreMark 1.0 : %f (iterations/sec)/MHz\n",score); //CoreMark = iterations of a sec
+  score = (iterations*1000000)/(float)cycles; //to relieve relations with FREQ
+  printf ("\nCoreMark 1.0 : %f Coremarks/MHz\n",score); //CoreMark = iterations of a cycle
   sim_end();
 #endif 
-
 	return NULL;
 }
 

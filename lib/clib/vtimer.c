@@ -12,6 +12,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+unsigned long long get_cycle()
+{
+  volatile unsigned long long   cycle;
+  asm ("csrr %[cycle], cycle\n"
+      :[cycle]"=r"(cycle)
+      :
+      :
+      );
+  return cycle;
+}
 
 int get_vtimer()
 {
