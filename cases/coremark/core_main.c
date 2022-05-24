@@ -27,9 +27,11 @@ El Dorado Hills, CA, 95762
 
 #ifdef BAREMETAL_M
   extern unsigned int get_cycle();
+  extern unsigned int get_instret();
   int cycle_start;
   int cycle_end;
   int cycles;
+  int instret_start, instret_end, instrets;
 #endif 
 
 int Loop_Num = 0;
@@ -59,7 +61,8 @@ void *iterate(void *pres) {
 	res->crcstate=0;
 
 #ifdef BAREMETAL_M
-  cycle_start= get_cycle();
+  cycle_start = get_cycle();
+  instret_start = get_instret();
 #endif
 	for (i=0; i<iterations; i++) {
 		crc=core_bench_list(res,1);
@@ -70,9 +73,11 @@ void *iterate(void *pres) {
 	}
 
 #ifdef BAREMETAL_M
-  cycle_end= get_cycle(); 
+  cycle_end = get_cycle(); 
+  instret_end = get_instret();
   cycles = cycle_end - cycle_start;
-  printf ("\nCoreMark has been run %d times, cost %d cycles !\n",iterations,cycles);
+  instrets = instret_end - instret_start;
+  printf ("\nCoreMark has been run %d times, cost %d cycles,%d instrets ,IPC=%f!\n",iterations,cycles,instrets,instrets/(float)cycles);
   float score;
   score = (iterations*1000000)/(float)cycles; //to relieve relations with FREQ
   printf ("\nCoreMark 1.0 : %f Coremarks/MHz\n",score); //CoreMark = iterations of a cycle

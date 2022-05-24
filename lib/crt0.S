@@ -25,10 +25,10 @@ limitations under the License.
 	.global	__start
 __start:
 
-
+#if 0
 # enable extension
   li   x3, 0x400000
-#  csrs mxstatus,x3
+  csrs 0x7c0,x3 //mxstatus
 
 # enable fpu
   li   x3, 0x6000
@@ -40,15 +40,17 @@ __start:
 
 # enable unalign
   li   x3, 0x8000
-#  csrs mxstatus,x3
+  csrs 0x7c0,x3 //mxstatus
 
 # mxstatus
   li   x3, 0x638000
-#  csrs mxstatus,x3
+  csrs 0x7c0,x3 //mxstatus
 
 # msmpr
- # csrsi msmpr, 0x1
+  csrsi 0x7f3, 0x1 //msmpr
+#endif
 
+#if 1
 # PART 1: initialize all registers
   li  x1, 0
   li  x2, 0
@@ -90,7 +92,7 @@ __start:
   .global cpu_0_sp
 cpu_0_sp:
   la x2, __kernel_stack
-
+  
 # PART 3:initialize mtvec value
   la    x3,__trap_handler
   csrw  mtvec,x3
@@ -98,16 +100,18 @@ cpu_0_sp:
   # enable mie
   li   x3, 0x8
   csrs mstatus,x3
+#endif
 
+#if 0
   # invalid all memory for IBP,BTB,BHT,DCACHE,ICACHE
-#  li x3, 0x70013
-#  csrs 0x7c2,x3  #mcor
+  li x3, 0x70013
+  csrs 0x7c2,x3  #mcor
 
   # enable ICACHE,DCACHE,BHT,BTB,IBP,RAS,WA
   # li x3, 0x10f7
   # csrs 0x7c1,x3  #mhcr
   li x3, 0x11ff
-# csrs mhcr,x3  #mhcr
+  csrs 0x7c1,x3  #mhcr
 
   .global after_l2en
 after_l2en:
@@ -115,17 +119,18 @@ after_l2en:
   # li x3, 0x4
   # csrs 0x7c1,x3  #mhcr
   li x3, 0x11ff
-#  csrs mhcr,x3  #mhcr
+  csrs 0x7c1,x3  #mhcr
 
   # enable lbuf,way_pred,data_cache_prefetch, amr
   # li x3, 0x7e30c
   # csrs 0x7c5,x3   #mhint
   li x3, 0x6e30c
-#  csrs mhint,x3   #mhint
+  csrs 0x7c5,x3   #mhint
 
   # mccr2
   li x3, 0xe0000009
-#  csrs mccr2,x3
+  csrs 0x7c3,x3 //mccr2
+#endif 
 
 #ifdef NEMU
   li a0,0x100
@@ -137,6 +142,7 @@ after_l2en:
   nop
   .endr
 #endif
+
   jal	main
 
 #ifdef NEMU
@@ -147,6 +153,7 @@ after_l2en:
   nop
   .endr
 #endif
+
   .global __exit
 __exit:
   addi x10,x0,0x0

@@ -7,7 +7,7 @@ coremark: ./work
 	@find ./lib/ -maxdepth 1 -type f -exec cp {} ./work/ \;
 	@cp ./lib/clib/* ./work
 	@cp ./lib/newlib_wrap/* ./work
-	@cd ./work && make -s clean && make -s all CASENAME=coremark FILE=core_main
+	@cd ./work && make -s clean && make  all CASENAME=coremark FILE=core_main
 
 
 hello_world: ./work

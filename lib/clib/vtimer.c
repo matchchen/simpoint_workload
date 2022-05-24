@@ -23,6 +23,17 @@ unsigned long long get_cycle()
   return cycle;
 }
 
+unsigned long long get_instret()
+{
+  volatile unsigned long long   instret;
+  asm ("csrr %[instret], minstret\n"
+      :[instret]"=r"(instret)
+      :
+      :
+      );
+  return instret;
+}
+
 int get_vtimer()
 {
   volatile unsigned int   LoadCount;

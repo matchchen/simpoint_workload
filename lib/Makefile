@@ -12,9 +12,21 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 #*/
-
-# set the toolchain dir according to your installation
-TOOL_EXTENSION := /home/user/toolchain/bin
+FLAG_ABI = 
+FLAG_MARCH = 
+CPU_ARCH := NEMU
+#CPU_ARCH_FLAG_0 => CPU Arch: c910
+ifeq (${CPU_ARCH}, c910)
+  FLAG_MARCH += -mtune=c910
+  FLAG_MARCH += -march=rv64imafdcxtheadc
+  FLAG_ABI   = -mabi=lp64d
+  TOOL_EXTENSION := /home/user/Xuantie-900-gcc-elf-newlib-x86_64-V2.0.3/bin
+else #default is NEMU, rv64GC
+  FLAG_MARCH += -march=rv64imafdc
+  FLAG_ABI   += -mabi=lp64d
+  TOOL_EXTENSION := /home/user/toolchain/bin
+endif
+CFLAGS = ${FLAG_MARCH} ${FLAG_ABI} 
 
 CC      = ${TOOL_EXTENSION}/riscv64-unknown-elf-gcc
 AS      = ${TOOL_EXTENSION}/riscv64-unknown-elf-as
@@ -29,19 +41,23 @@ CSRC = $(wildcard *.c)
 
 OBJECTS = $(SSRC:%.S=%.o) $(sSRC:%.s=%.o) $(CSRC:%.c=%.o)
 
-FLAG_MARCH += -march=rv64imafdc
-FLAG_ABI   = -mabi=lp64d
-
-CFLAGS = ${FLAG_MARCH} ${FLAG_ABI}
-
-CFLAGS += -DNEMU=1
 
 ifeq (${CASENAME}, coremark)
-  #CFLAGS += -c -O3 -mtune=c910 -static -funroll-all-loops -finline-limit=500 -fgcse-sm -fno-schedule-insns --param max-rtl-if-conversion-unpredictable-cost=100 -msignedness-cmpiv -fno-code-hoisting -mno-thread-jumps1 -mno-iv-adjust-addr-cost -mno-expand-split-imm -DITERATIONS=10000
-  CFLAGS += -c -O2 -static -DITERATIONS=1
-  # CFLAGS += -c -v -funroll-all-loops -finline-limit=500 -fgcse-sm -fno-schedule-insns --param max-rtl-if-conversion-unpredictable-cost=100 -fno-code-hoisting -mno-thread-jumps1 -mno-iv-adjust-addr-cost -DITERATIONS=10000 -O3 -static -mbit-translate
+ifeq (${CPU_ARCH}, c910)
+  CFLAGS += -c -O3 -mtune=c910 -static -funroll-all-loops -finline-limit=500 -fgcse-sm -fno-schedule-insns --param max-rtl-if-conversion-unpredictable-cost=100 -msignedness-cmpiv -fno-code-hoisting -mno-thread-jumps1 -mno-iv-adjust-addr-cost -mno-expand-split-imm -DITERATIONS=1
+else
+  #CFLAGS += -c -O3 -static -DITERATIONS=1
+  CFLAGS += -c -v -funroll-all-loops -finline-limit=500 -fgcse-sm -fno-schedule-insns --param max-rtl-if-conversion-unpredictable-cost=100 -fno-code-hoisting -DITERATIONS=1 -O3 -static
+  #CFLAGS += -c -v -funroll-all-loops -finline-limit=500 -fgcse-sm -fno-schedule-insns --param max-rtl-if-conversion-unpredictable-cost=100 -fno-code-hoisting -mno-thread-jumps1 -mno-iv-adjust-addr-cost -DITERATIONS=1 -O3 -static -mbit-translate
+endif
 else
   CFLAGS += -c -O2 
+endif
+
+ifeq (${CPU_ARCH}, c910)
+#	
+else
+  CFLAGS += -DNEMU=1
 endif
 
 CFLAGS += --specs=nano.specs
@@ -76,6 +92,8 @@ ${FILE}.elf : ${OBJECTS} linker.lcf
 	${CC} ${LINKFLAGS} ${LINKLIBS} ${OBJECTS} -o $@ -lm
 
 ${FILE}.bin: ${FILE}.elf
+	${OBJCOPY} -O binary $< ${FILE}_inst.bin -j .text*  -j .rodata* -j .eh_frame*
+	${OBJCOPY} -O binary $< ${FILE}_data.bin -j .data*  -j .bss -j .COMMON
 	$(OBJCOPY) -O binary $^ $@
 
 ${FILE}.vmem: ${FILE}.bin
@@ -86,7 +104,7 @@ ${FILE}.vmem: ${FILE}.bin
 
 
 ${FILE}.dump: ${FILE}.elf
-	$(OBJDUMP) --disassemble-all $< > $@
+	$(OBJDUMP) --disassemble-all -z $< > $@
 
 INST_HEX = ${FILE}_inst.hex
 DATA_HEX = ${FILE}_data.hex
